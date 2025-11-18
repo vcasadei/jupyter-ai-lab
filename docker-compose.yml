@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  jupyterhub:
+    build: ./hub_image
+    container_name: jupyterhub_server
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+      - "./jupyterhub_config.py:/srv/jupyterhub/jupyterhub_config.py"
+      - "hub_data:/srv/jupyterhub"
+    ports:
+      - "8080:8000"
+    environment:
+      # Configurações passadas para o Hub
+      HUB_PASSWORD: ${HUB_PASSWORD}
+      DOCKER_NOTEBOOK_IMAGE: ghcr.io/vcasadei/pytorch-tensorflow-cuda12-ai-ml:latest
+      HOST_WORK_DIR: ${HOST_WORK_DIR}
+      HUB_USERS: ${HUB_USERS}
+      HUB_ADMINS: ${HUB_ADMINS}
+    env_file:
+      - .env
+    networks:
+      - jupyterhub-network
+    restart: always
+
+  # Serviço apenas para construir e tagear a imagem localmente
+  image_builder:
+    build: ./notebook_image
+    image: ghcr.io/vcasadei/pytorch-tensorflow-cuda12-ai-ml:latest
+    command: echo "Build complete."
+    networks:
+      - jupyterhub-network
+
+volumes:
+  hub_data:
+
+networks:
+  jupyterhub-network:
+    name: jupyterhub-network
+    driver: bridge
