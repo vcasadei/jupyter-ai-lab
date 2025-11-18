@@ -1,57 +1,64 @@
 # JupyterHub AI Lab (GPU Enabled)
 
-Uma solução robusta de JupyterHub containerizado com suporte nativo a GPU (NVIDIA CUDA 12), projetada para colaboração em equipes de Data Science.
+A robust, containerized JupyterHub solution with native NVIDIA GPU support (CUDA 12), designed for Data Science teams and research.
 
-## 🌟 Destaques
+This project offers two modes of operation:
+1.  **Multi-User Hub:** Full JupyterHub setup with shared storage and user management.
+2.  **Standalone Lab:** Run a single JupyterLab instance for personal use.
 
-* **Dual-Stack Kernel:** PyTorch (Base) e TensorFlow (Isolado) no mesmo ambiente.
-* **GPU Ready:** Configurado para NVIDIA Drivers e CUDA 12.
-* **TensorFlow GPU Fix:** Solução implementada para TF 2.x reconhecer GPU dentro do Docker.
-* **Modo República:** Sistema de arquivos compartilhado com gerenciamento automático de permissões (ACL/SetGID).
-* **Configuração Dinâmica:** Usuários e senhas gerenciados via arquivo `.env`.
+## 🌟 Highlights
 
-## 📦 Stack Tecnológica
+* **Dual-Stack Kernel:** PyTorch (Base) and TensorFlow (Isolated) in the same environment.
+* **GPU Ready:** Pre-configured for NVIDIA Drivers, CUDA 12, and cuDNN.
+* **TensorFlow GPU Fix:** Custom installation to ensure TF 2.x recognizes GPU inside Docker.
+* **"Republic" Mode (Hub Only):** Shared file system with automatic permission management (ACL/SetGID), allowing real-time collaboration on files.
+* **Dynamic Config:** Users and passwords managed via `.env` file.
 
-* **Imagem Base:** `ghcr.io/vcasadei/pytorch-tensorflow-cuda12-ai-ml:latest`
+## 📦 Tech Stack
+
+* **Base Image:** `ghcr.io/vcasadei/pytorch-tensorflow-cuda12-ai-ml:latest`
 * **Kernels:**
-    1.  **Python 3 (PyTorch GPU):** PyTorch 2.x, Pandas, Scikit-Learn.
+    1.  **Python 3 (PyTorch GPU):** PyTorch 2.x, Pandas, Scikit-Learn, Seaborn.
     2.  **Python 3 (TensorFlow GPU + Keras):** TF 2.x [and-cuda], Keras, TF Hub, Graphviz.
 
-## 🚀 Instalação (Deploy em 5 Minutos)
+---
 
-### 1. Clone o projeto
+## 🚀 Mode 1: JupyterHub (Multi-User)
+
+Ideal for teams. Includes authentication, persistent user storage, and a shared "commons" folder.
+
+### 1. Clone the repository
 ```bash
 git clone [https://github.com/vcasadei/jupyter-ai-lab.git](https://github.com/vcasadei/jupyter-ai-lab.git)
 cd jupyter-ai-lab
 ```
 
+### 2. Configure Environment
 
-### 2. Crie o arquivo `.env`
-
-Crie um arquivo `.env` na raiz com suas configurações:
+Create a `.env` file in the root directory:
 
 Ini, TOML
 
 ```
-HUB_PASSWORD=sua_senha_secreta
-HOST_WORK_DIR=/home/seu_usuario/jupyter-ai-lab/all_work
-HUB_USERS=usuario1,usuario2,usuario3
-HUB_ADMINS=usuario1
+HUB_PASSWORD=your_secure_password
+HOST_WORK_DIR=/home/your_user/jupyter-ai-lab/all_work
+HUB_USERS=user1,user2,user3
+HUB_ADMINS=user1
 
 ```
 
-### 3. Configure as Permissões do Host
+### 3. Setup Host Permissions (Crucial)
 
-Para o compartilhamento funcionar, execute no servidor:
+For the shared folder collaboration to work, you must configure ACLs on the host directory:
 
 Bash
 
 ```
-# Cria pasta e instala ACL
+# Create folder and install ACL
 mkdir -p all_work
 sudo apt install acl
 
-# Configura permissão de grupo (users) e herança
+# Configure group ownership (users) and inheritance
 sudo chown -R 1000:100 all_work
 sudo chmod g+s all_work
 sudo setfacl -R -d -m g::rwx all_work
@@ -59,7 +66,7 @@ sudo setfacl -R -m g::rwx all_work
 
 ```
 
-### 4. Execute
+### 4. Launch
 
 Bash
 
@@ -68,15 +75,53 @@ docker compose up -d
 
 ```
 
-Acesse em `http://localhost:8080`
+Access at `http://localhost:8080`.
 
-## 🛠️ Manutenção
+----------
 
--   **Adicionar Usuários:** Edite `HUB_USERS` no `.env` e rode `docker compose up -d`.
+## 🏎️ Mode 2: Standalone JupyterLab (Single User)
+
+Ideal for individual research or quick testing. No Hub, no database, just pure JupyterLab.
+
+### Quick Start
+
+Run the following command to launch a disposable instance with GPU support:
+
+Bash
+
+```
+docker run -it --rm \
+    --gpus all \
+    -p 8888:8888 \
+    -v "${PWD}":/home/jovyan/work \
+    ghcr.io/vcasadei/pytorch-tensorflow-cuda12-ai-ml:latest
+
+```
+
+### Access
+
+-   Open your browser at `http://localhost:8088`.
     
--   **Atualizar Imagem:** `docker compose pull` e depois `docker compose up -d`.
+-   Look at the terminal output to copy the **token** (e.g., `http://127.0.0.1:8888/lab?token=...`).
     
 
-## 👤 Autor
+### Persistence
 
-**Vitor Casadei** ([@vcasadei](https://github.com/vcasadei))
+In the command above, the `-v "${PWD}":/home/jovyan/work` flag mounts your current folder into the container. Any file you save in JupyterLab will be saved in your current terminal directory.
+
+----------
+
+## 🛠️ Maintenance (Hub Mode)
+
+-   **Add Users:** Edit `HUB_USERS` in `.env` and run `docker compose up -d`.
+    
+-   **Update Image:** Run `docker compose pull` followed by `docker compose up -d`.
+    
+-   **Logs:** Check logs with `docker compose logs -f jupyterhub`.
+    
+
+## 👤 Author
+
+**Vitor Casadei**
+
+-   GitHub: [@vcasadei](https://github.com/vcasadei)
